@@ -1,44 +1,64 @@
-# controllers/zoom_controller.py
+from typing import Tuple
+from PyQt6.QtCore import QObject, pyqtSignal
 from models.zoom_model import ZoomModel
 
-class ZoomController:
+class ZoomController(QObject):
+    """Controller class สำหรับจัดการการ zoom และเชื่อมต่อระหว่าง model กับ view"""
+    
+    zoom_status_updated = pyqtSignal(dict)
+    
     def __init__(self):
-        self.zoom_model = ZoomModel()
-        self.views = []  # เก็บ views ที่ต้องอัพเดทเมื่อมีการซูม
-
-    def add_view(self, view):
-        """เพิ่ม view ที่ต้องอัพเดทเมื่อซูม"""
-        self.views.append(view)
-
-    def zoom_in(self):
-        """จัดการการซูมเข้า"""
-        zoom = self.zoom_model.zoom_in()
-        self._notify_views()
-        return zoom
-
-    def zoom_out(self):
-        """จัดการการซูมออก"""
-        zoom = self.zoom_model.zoom_out()
-        self._notify_views()
-        return zoom
-
-    def reset_zoom(self):
-        """จัดการการรีเซ็ตซูม"""
-        zoom = self.zoom_model.reset_zoom()
-        self._notify_views()
-        return zoom
-
-    def set_zoom(self, factor):
-        """จัดการการกำหนดค่าซูม"""
-        zoom = self.zoom_model.set_zoom(factor)
-        self._notify_views()
-        return zoom
-
-    def get_zoom_factor(self):
-        """รับค่า zoom factor ปัจจุบัน"""
-        return self.zoom_model.zoom_factor
-
-    def _notify_views(self):
-        """แจ้งเตือน views ให้อัพเดท"""
-        for view in self.views:
-            view.update_zoom(self.zoom_model.get_zoom_percentage())
+        super().__init__()
+        self._model = ZoomModel()
+        self._model.zoom_changed.connect(self._handle_zoom_change)
+    
+    def _handle_zoom_change(self, factor: float) -> None:
+        """
+        จัดการเมื่อค่า zoom เปลี่ยน และส่งข้อมูลสถานะไปยัง view
+        
+        Args:
+            factor (float): ค่า zoom factor ใหม่
+        """
+        status = self._model.get_zoom_info()
+        self.zoom_status_updated.emit(status)
+    
+    def zoom_in(self) -> None:
+        """สั่งให้เพิ่มขนาด zoom"""
+        self._model.zoom_in()
+    
+    def zoom_out(self) -> None:
+        """สั่งให้ลดขนาด zoom"""
+        self._model.zoom_out()
+    
+    def reset_zoom(self) -> None:
+        """สั่งให้รีเซ็ต zoom เป็น 100%"""
+        self._model.reset_zoom()
+    
+    def handle_wheel_event(self, delta: int, ctrl_pressed: bool = False) -> None:
+        """
+        จัดการ event จากการหมุนล้อเมาส์
+        
+        Args:
+            delta (int): ค่าการหมุน (บวกคือหมุนขึ้น, ลบคือหมุนลง)
+            ctrl_pressed (bool): สถานะการกดปุ่ม Ctrl
+        """
+        if not ctrl_pressed:
+            return
+            
+        if delta > 0:
+            self.zoom_in()
+        else:
+            self.zoom_out()
+    
+    def transform_point(self, x: float, y: float) -> Tuple[float, float]:
+        """
+        แปลงพิกัดตามค่า zoom ปัจจุบัน
+        
+        Args:
+            x (float): พิกัด x
+            y (float): พิกัด y
+            
+        Returns:
+            Tuple[float, float]: พิกัดที่แปลงแล้ว (x, y)
+        """
+        return self._model.transform_point(x, y)
