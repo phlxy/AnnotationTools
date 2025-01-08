@@ -2,12 +2,12 @@ from PyQt6.QtWidgets import (QApplication, QMainWindow, QWidget, QVBoxLayout,
                             QHBoxLayout, QPushButton, QLabel, QComboBox, 
                             QFileDialog, QListWidget, QListWidgetItem, QScrollArea,QMessageBox)
 from .toolbar_view import ToolbarView
-from controllers.main_controller import MainController
+from controllers.label_controller import LabelController
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.controller = MainController()
+        #self.controller = LabelController()
         self.setup_ui()
     
     def setup_ui(self):
@@ -22,5 +22,5 @@ class MainWindow(QMainWindow):
         # ปรับขนาด window
         self.setGeometry(100, 100, 1400, 1000)
 
-        self.toolbar = ToolbarView(self.controller)
+        self.toolbar = ToolbarView()
         layout.addWidget(self.toolbar)
