@@ -1,7 +1,7 @@
 from PyQt6.QtWidgets import (QWidget, QHBoxLayout, QLabel, 
                             QComboBox, QPushButton, QFrame)
 from controllers.label_controller import LabelController
-#from controllers.zoom_controller import ZoomController
+from controllers.zoom_controller import ZoomController
 from config.config import Config
 from .zoom_view import ZoomView
 from .label_view import LabelView
@@ -10,7 +10,7 @@ class ToolbarView(QWidget):
     def __init__(self):
         super().__init__()
         self.labelController = LabelController()
-        # self.zoomController = ZoomController()
+        self.zoomController = ZoomController()
         self.layout = QHBoxLayout(self)
         self.layout.setContentsMargins(10, 10, 10, 10)  # เพิ่ม margin รอบๆ layout หลัก
         self.layout.setSpacing(10)  # เพิ่มระยะห่างระหว่าง widgets

@@ -1,50 +1,49 @@
-from PyQt6.QtWidgets import QWidget, QHBoxLayout, QLabel, QComboBox, QFrame, QPushButton
+# views/zoom_view.py
+from PyQt6.QtWidgets import QWidget, QHBoxLayout, QPushButton, QLabel
 from PyQt6.QtCore import Qt
-from controllers.zoom_controller import ZoomController
 
 class ZoomView(QWidget):
-    def __init__(self, parent: QWidget, controller: ZoomController):
+    def __init__(self, zoom_controller):
         super().__init__()
-        self.controller = controller
+        self.controller = zoom_controller
+        self.controller.add_view(self)
         self.setup_ui()
 
     def setup_ui(self):
-        self.layout = QHBoxLayout(self)  # Initialize the layout
-        self.setLayout(self.layout)       # Set the layout for the widget
+        """ตั้งค่า UI สำหรับการซูม"""
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
 
-        # Zoom Controls
-        self.layout.addWidget(self.create_separator())
-        
+        # ปุ่มซูมออก
         self.zoom_out_btn = QPushButton("🔍-")
-        self.zoom_out_btn.clicked.connect(self.on_zoom_out)
-        self.layout.addWidget(self.zoom_out_btn)
+        self.zoom_out_btn.setFixedWidth(50)
+        self.zoom_out_btn.clicked.connect(self.controller.zoom_out)
+        layout.addWidget(self.zoom_out_btn)
 
-        self.zoom_reset_btn = QPushButton("100%")
-        self.zoom_reset_btn.clicked.connect(self.on_zoom_reset)
-        self.layout.addWidget(self.zoom_reset_btn)
+        # แสดงค่าซูม
+        self.zoom_label = QPushButton("100%")
+        self.zoom_label.setFixedWidth(60)
+        self.zoom_label.clicked.connect(self.controller.reset_zoom)
+        layout.addWidget(self.zoom_label)
 
+        # ปุ่มซูมเข้า
         self.zoom_in_btn = QPushButton("🔍+")
-        self.zoom_in_btn.clicked.connect(self.on_zoom_in)
-        self.layout.addWidget(self.zoom_in_btn)
+        self.zoom_in_btn.setFixedWidth(50)
+        self.zoom_in_btn.clicked.connect(self.controller.zoom_in)
+        layout.addWidget(self.zoom_in_btn)
 
-    def on_zoom_in(self):
-        """จัดการการซูมเข้า"""
-        scale = min(2.0, self.controller.annotation_controller.scale_factor * 1.2)
-        self.controller.annotation_controller.set_scale_factor(scale)
-        self.update_zoom_button()
+    def update_zoom(self, zoom_percentage):
+        """อัพเดทการแสดงค่าซูม"""
+        self.zoom_label.setText(f"{zoom_percentage}%")
 
-    def on_zoom_out(self):
-        """จัดการการซูมออก"""
-        scale = max(0.1, self.controller.annotation_controller.scale_factor / 1.2)
-        self.controller.annotation_controller.set_scale_factor(scale)
-        self.update_zoom_button()
-
-    def on_zoom_reset(self):
-        """รีเซ็ตการซูม"""
-        self.controller.annotation_controller.set_scale_factor(1.0)
-        self.update_zoom_button()
-
-    def update_zoom_button(self):
-        """อัพเดทปุ่มซูม"""
-        scale = self.controller.annotation_controller.scale_factor
-        self.zoom_reset_btn.setText(f"{int(scale * 100)}%")
+    def wheelEvent(self, event):
+        """จัดการการซูมด้วยเมาส์"""
+        if event.modifiers() == Qt.KeyboardModifier.ControlModifier:
+            delta = event.angleDelta().y()
+            if delta > 0:
+                self.controller.zoom_in()
+            else:
+                self.controller.zoom_out()
+            event.accept()
+        else:
+            super().wheelEvent(event)
